@@ -2,17 +2,20 @@ package dev.flowty.noggin.extract;
 
 import java.nio.file.Path;
 
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.media.DicomDirReader;
-
+/**
+ * Extracts data form a dicomdir file
+ *
+ */
 public class Extract {
 
-	public static void read( Path dicomdir ) throws Exception {
-
-		DicomDirReader ddr = new DicomDirReader( dicomdir.toFile() );
-		Attributes attr = ddr.getFileMetaInformation();
-
-		System.out.println( "Attributes are: " + attr );
+	/**
+	 * Dumps the file's data to stdout
+	 * 
+	 * @param dicomdir the file
+	 */
+	public static void read(Path dicomdir) {
+		Directory dir = new Directory(dicomdir);
+		dir.roots().forEach(root -> root.print("", "IMAGE"::equals));
 	}
 
 }

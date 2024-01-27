@@ -66,7 +66,7 @@
 		<repository>
 			<!-- source for dcm4che artifacts -->
 			<id>scijava</id>
-			<url>https://maven.scijava.org/content/repositories/public/</url>
+			<url>https://www.dcm4che.org/maven2/</url>
 		</repository>
 	</repositories>
 
