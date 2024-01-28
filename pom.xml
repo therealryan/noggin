@@ -11,6 +11,7 @@
 
 	<modules>
 		<module>extract</module>
+		<module>volume</module>
 	</modules>
 
 	<scm>
