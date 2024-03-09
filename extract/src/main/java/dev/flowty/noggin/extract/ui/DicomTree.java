@@ -11,6 +11,9 @@ import javax.swing.SwingUtilities;
 import dev.flowty.noggin.extract.model.Directory;
 import dev.flowty.noggin.extract.model.DirectoryRecord;
 
+/**
+ * Displays the dicomDirect tree structure, down to the level of series
+ */
 public class DicomTree {
 
 	private final JTree tree;

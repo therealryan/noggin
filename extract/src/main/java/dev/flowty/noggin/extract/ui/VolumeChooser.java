@@ -79,6 +79,7 @@ public class VolumeChooser {
 	private final Directory directory;
 	private final JPanel main = new JPanel();
 	private final DicomTree tree;
+	private final SeriesList series;
 	private final RecordDump dump;
 	private final Preview preview;
 	private final JButton okButton = new JButton( "OK" );
@@ -89,10 +90,16 @@ public class VolumeChooser {
 		this.directory = directory;
 
 		tree = new DicomTree( directory );
+		series = new SeriesList();
 		dump = new RecordDump();
 		preview = new Preview();
 
 		tree.selection( dr -> {
+			series.set( dr );
+			dump.set( dr );
+			preview.set( dr );
+		} );
+		series.selection( dr -> {
 			dump.set( dr );
 			preview.set( dr );
 		} );
@@ -107,6 +114,7 @@ public class VolumeChooser {
 		main.add( new JLabel( directory.file().toString(), SwingConstants.CENTER ),
 				BorderLayout.NORTH );
 		main.add( split, BorderLayout.CENTER );
+		main.add( series.widget(), BorderLayout.EAST );
 		main.add( okButton, BorderLayout.SOUTH );
 	}
 }

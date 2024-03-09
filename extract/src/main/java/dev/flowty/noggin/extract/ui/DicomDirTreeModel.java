@@ -8,6 +8,7 @@ import javax.swing.tree.TreePath;
 
 import dev.flowty.noggin.extract.model.Directory;
 import dev.flowty.noggin.extract.model.DirectoryRecord;
+import dev.flowty.noggin.extract.model.DirectoryRecord.Type;
 
 class DicomDirTreeModel implements TreeModel {
 
@@ -38,7 +39,7 @@ class DicomDirTreeModel implements TreeModel {
 
 	@Override
 	public boolean isLeaf( Object node ) {
-		return children( node ).isEmpty();
+		return ((DirectoryRecord) node).getType() == Type.SERIES || children( node ).isEmpty();
 	}
 
 	@Override

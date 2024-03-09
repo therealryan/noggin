@@ -16,11 +16,30 @@ import org.dcm4che3.media.DicomDirReader;
  */
 public class DirectoryRecord {
 
+	public enum Type {
+		METADATA,
+		PATIENT,
+		STUDY,
+		SERIES,
+		SR_DOCUMENT,
+		IMAGE,
+		PRESENTATION,
+		;
+
+		public static Type get( String name ) {
+			if( name == null ) {
+				return METADATA;
+			}
+			return valueOf( name.replace( ' ', '_' ) );
+		}
+	}
+
 	/**
 	 * The file reader
 	 */
 	protected final DicomDirReader reader;
 	private final Attributes data;
+	private final Type type;
 
 	private List<DirectoryRecord> children = null;
 
@@ -31,6 +50,7 @@ public class DirectoryRecord {
 	DirectoryRecord( DicomDirReader reader, Attributes data ) {
 		this.reader = reader;
 		this.data = data;
+		type = Type.get( data.getString( Tag.DirectoryRecordType ) );
 	}
 
 	/**
@@ -68,20 +88,20 @@ public class DirectoryRecord {
 	}
 
 	public String summary() {
-		String type = data.getString( Tag.DirectoryRecordType );
-		if( type == null ) {
-			return "Metadata";
-		}
 		String desc = switch( type ) {
-			case "PATIENT" -> data.getString( Tag.PatientName );
-			case "STUDY" -> data.getString( Tag.StudyDescription );
-			case "SERIES" -> data.getString( Tag.SeriesDescription );
-			case "SR DOCUMENT" -> String.join( "/", data.getStrings( Tag.ReferencedFileID ) );
-			case "IMAGE" -> String.join( "/", data.getStrings( Tag.ReferencedFileID ) );
+			case PATIENT -> data.getString( Tag.PatientName );
+			case STUDY -> data.getString( Tag.StudyDescription );
+			case SERIES -> data.getString( Tag.SeriesDescription );
+			case SR_DOCUMENT -> String.join( "/", data.getStrings( Tag.ReferencedFileID ) );
+			case IMAGE -> String.join( "/", data.getStrings( Tag.ReferencedFileID ) );
 			default -> "???";
 		};
 
 		return type + " " + desc;
+	}
+
+	public Type getType() {
+		return type;
 	}
 
 	public String dump() {

@@ -15,7 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.flowty.noggin.extract.model.DirectoryRecord;
+import dev.flowty.noggin.extract.model.DirectoryRecord.Type;
 
+/**
+ * Displays the currently-selected image from {@link SeriesList}
+ */
 class Preview {
 	private static final Logger LOG = LoggerFactory.getLogger( Preview.class );
 
@@ -59,7 +63,9 @@ class Preview {
 	void set( DirectoryRecord dr ) {
 		image = null;
 		Path file = dr.referencedFile();
-
+		if( file == null && dr.getType() == Type.SERIES ) {
+			file = dr.children().get( 0 ).referencedFile();
+		}
 		if( file != null ) {
 			try( DicomInputStream dis = new DicomInputStream( file.toFile() ) ) {
 				imageReader.setInput( dis );
