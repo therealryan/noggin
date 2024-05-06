@@ -11,6 +11,8 @@
 
 	<modules>
 		<module>extract</module>
+		<module>render</module>
+		<module>util</module>
 		<module>volume</module>
 	</modules>
 

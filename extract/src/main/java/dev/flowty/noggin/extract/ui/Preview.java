@@ -1,6 +1,7 @@
 package dev.flowty.noggin.extract.ui;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
@@ -54,6 +55,9 @@ class Preview {
 				}
 			}
 		};
+		widget.setMinimumSize( new Dimension( 300, 300 ) );
+		widget.setSize( new Dimension( 300, 300 ) );
+		widget.setPreferredSize( new Dimension( 300, 300 ) );
 	}
 
 	public JComponent widget() {

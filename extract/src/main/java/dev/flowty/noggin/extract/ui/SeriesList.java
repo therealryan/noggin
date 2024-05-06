@@ -87,4 +87,8 @@ public class SeriesList {
 			}
 		} );
 	}
+
+	public void rangeSelection( Consumer<List<DirectoryRecord>> listener ) {
+		list.addListSelectionListener( e -> listener.accept( list.getSelectedValuesList() ) );
+	}
 }

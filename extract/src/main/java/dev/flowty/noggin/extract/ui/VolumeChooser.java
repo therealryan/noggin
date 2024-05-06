@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingConstants;
@@ -45,11 +46,6 @@ public class VolumeChooser {
 
 		AtomicBoolean complete = new AtomicBoolean( false );
 
-		vc.okButton.addActionListener( e -> {
-			frame.setVisible( false );
-			frame.dispose();
-		} );
-
 		frame.addWindowListener( new WindowAdapter() {
 			@Override
 			public void windowClosed( WindowEvent e ) {
@@ -82,7 +78,7 @@ public class VolumeChooser {
 	private final SeriesList series;
 	private final RecordDump dump;
 	private final Preview preview;
-	private final JButton okButton = new JButton( "OK" );
+	private final JButton export = new JButton( "Export volume" );
 
 	private Volume result;
 
@@ -94,6 +90,8 @@ public class VolumeChooser {
 		dump = new RecordDump();
 		preview = new Preview();
 
+		export.setEnabled( false );
+
 		tree.selection( dr -> {
 			series.set( dr );
 			dump.set( dr );
@@ -102,6 +100,9 @@ public class VolumeChooser {
 		series.selection( dr -> {
 			dump.set( dr );
 			preview.set( dr );
+		} );
+		series.rangeSelection( images -> {
+			export.setEnabled( images != null && !images.isEmpty() );
 		} );
 
 		JSplitPane east = new JSplitPane( JSplitPane.VERTICAL_SPLIT,
@@ -115,6 +116,10 @@ public class VolumeChooser {
 				BorderLayout.NORTH );
 		main.add( split, BorderLayout.CENTER );
 		main.add( series.widget(), BorderLayout.EAST );
-		main.add( okButton, BorderLayout.SOUTH );
+		main.add( export, BorderLayout.SOUTH );
+
+		export.addActionListener( e -> {
+			JOptionPane.showMessageDialog( main, "TODO: export the data. Maybe launch the visualiser?" );
+		} );
 	}
 }
