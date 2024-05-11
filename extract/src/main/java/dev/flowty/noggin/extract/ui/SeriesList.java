@@ -26,6 +26,7 @@ public class SeriesList {
 	private final JSlider slider = new JSlider( JSlider.VERTICAL );
 	private final JComponent widget;
 
+	/***/
 	public SeriesList() {
 		JScrollPane ls = new JScrollPane( list,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -48,6 +49,11 @@ public class SeriesList {
 		} );
 	}
 
+	/**
+	 * Called when new series is clicked in the tree
+	 * 
+	 * @param series The new series to display
+	 */
 	void set( DirectoryRecord series ) {
 		if( series.getType() == Type.SERIES ) {
 			DefaultListModel<DirectoryRecord> m = new DefaultListModel<>();
@@ -67,10 +73,18 @@ public class SeriesList {
 		slider.setEnabled( false );
 	}
 
+	/**
+	 * @return The widget to put in the gui
+	 */
 	public JComponent widget() {
 		return widget;
 	}
 
+	/**
+	 * Adds a listener that will be notifed when the list selection changes
+	 * 
+	 * @param listener The object to appraise of selection changes
+	 */
 	public void selection( Consumer<DirectoryRecord> listener ) {
 		list.addListSelectionListener( e -> Optional
 				.ofNullable( list.getSelectedValuesList() )
@@ -88,7 +102,19 @@ public class SeriesList {
 		} );
 	}
 
+	/**
+	 * Adds a listener that will be notified when the list selection range changes
+	 * 
+	 * @param listener The object to appraise of selection changes
+	 */
 	public void rangeSelection( Consumer<List<DirectoryRecord>> listener ) {
 		list.addListSelectionListener( e -> listener.accept( list.getSelectedValuesList() ) );
+	}
+
+	/**
+	 * @return The list of currently-selected records
+	 */
+	public List<DirectoryRecord> selected() {
+		return list.getSelectedValuesList();
 	}
 }

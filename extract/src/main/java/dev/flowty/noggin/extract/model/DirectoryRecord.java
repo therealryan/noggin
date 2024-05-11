@@ -1,5 +1,6 @@
 package dev.flowty.noggin.extract.model;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -7,14 +8,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.media.DicomDirReader;
 
 /**
  * A single record in a <code>DICOMDIR</code> file
  */
 public class DirectoryRecord {
+	private static final ImageReader IMAGE_READER = ImageIO.getImageReadersByFormatName( "DICOM" )
+			.next();
 
 	public enum Type {
 		METADATA,
@@ -112,4 +119,27 @@ public class DirectoryRecord {
 	public String toString() {
 		return summary();
 	}
+
+	/**
+	 * Extracts image data, if any is referenced, from the dicom record
+	 * 
+	 * @return image data, or <code>null</code> if this record does not reference an
+	 *         image
+	 */
+	public BufferedImage getImage() {
+		Path file = referencedFile();
+		if( file != null ) {
+			try( DicomInputStream dis = new DicomInputStream( file.toFile() ) ) {
+				synchronized( IMAGE_READER ) {
+					IMAGE_READER.setInput( dis );
+					return IMAGE_READER.read( 0 );
+				}
+			}
+			catch( Exception e ) {
+				throw new IllegalStateException( "Failed to read image data", e );
+			}
+		}
+		return null;
+	}
+
 }

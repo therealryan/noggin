@@ -34,12 +34,4 @@ class RenderTest {
 
 		assertEquals( expected, actual );
 	}
-
-	/**
-	 * @throws IOException on failure
-	 */
-	@Test
-	void serve() throws IOException {
-		Render.serve();
-	}
 }

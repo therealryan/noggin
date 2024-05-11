@@ -11,7 +11,6 @@ import javax.imageio.ImageReader;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
-import org.dcm4che3.io.DicomInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,21 +64,13 @@ class Preview {
 	}
 
 	void set( DirectoryRecord dr ) {
-		image = null;
 		Path file = dr.referencedFile();
-		if( file == null && dr.getType() == Type.SERIES ) {
-			file = dr.children().get( 0 ).referencedFile();
+		if( dr.getType() == Type.SERIES ) {
+			image = dr.children().get( 0 ).getImage();
 		}
-		if( file != null ) {
-			try( DicomInputStream dis = new DicomInputStream( file.toFile() ) ) {
-				imageReader.setInput( dis );
-				image = imageReader.read( 0 );
-			}
-			catch( Exception e ) {
-				LOG.error( "Failed to read " + file, e );
-			}
+		else {
+			image = dr.getImage();
 		}
-
 		widget.repaint();
 	}
 }
