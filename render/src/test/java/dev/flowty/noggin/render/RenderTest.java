@@ -34,4 +34,11 @@ class RenderTest {
 
 		assertEquals( expected, actual );
 	}
+
+	@Test
+	void render() throws IOException {
+		Render.serve( Paths.get( "../extract/target/bone.nrrd" ) );
+
+		System.in.read();
+	}
 }

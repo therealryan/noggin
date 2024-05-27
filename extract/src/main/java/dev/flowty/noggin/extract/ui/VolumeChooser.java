@@ -3,15 +3,8 @@ package dev.flowty.noggin.extract.ui;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,8 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import dev.flowty.noggin.data.Volume;
 import dev.flowty.noggin.extract.model.Directory;
-import dev.flowty.noggin.extract.model.DirectoryRecord;
-import dev.flowty.noggin.render.Render;
 
 /**
  * Displays a UI from which volume data can be selected from a dicom file
@@ -85,7 +76,6 @@ public class VolumeChooser {
 	private final SeriesList series;
 	private final RecordDump dump;
 	private final Preview preview;
-	private final JButton export = new JButton( "Export volume" );
 
 	private Volume result;
 
@@ -93,11 +83,9 @@ public class VolumeChooser {
 		this.directory = directory;
 
 		tree = new DicomTree( directory );
-		series = new SeriesList();
-		dump = new RecordDump();
 		preview = new Preview();
-
-		export.setEnabled( false );
+		series = new SeriesList( preview );
+		dump = new RecordDump();
 
 		tree.selection( dr -> {
 			series.set( dr );
@@ -107,9 +95,6 @@ public class VolumeChooser {
 		series.selection( dr -> {
 			dump.set( dr );
 			preview.set( dr );
-		} );
-		series.rangeSelection( images -> {
-			export.setEnabled( images != null && !images.isEmpty() );
 		} );
 
 		JSplitPane east = new JSplitPane( JSplitPane.VERTICAL_SPLIT,
@@ -123,27 +108,5 @@ public class VolumeChooser {
 				BorderLayout.NORTH );
 		main.add( split, BorderLayout.CENTER );
 		main.add( series.widget(), BorderLayout.EAST );
-		main.add( export, BorderLayout.SOUTH );
-
-		export.addActionListener( e -> {
-
-			JFileChooser jfc = new JFileChooser();
-			jfc.setCurrentDirectory( new File( "." ) );
-			if( jfc.showDialog( export, "Export" ) == JFileChooser.APPROVE_OPTION ) {
-				List<DirectoryRecord> selected = series.selected();
-				BufferedImage first = selected.get( 0 ).getImage();
-				Volume volume = new Volume( first.getWidth(), first.getHeight(), selected.size() );
-				for( DirectoryRecord dr : selected ) {
-					BufferedImage image = dr.getImage();
-					byte[] data = ((DataBufferByte) image.getData().getDataBuffer()).getData();
-					volume.with( data );
-				}
-
-				Path path = jfc.getSelectedFile().toPath();
-				volume.writeNRRD( path );
-				Render.serve( path );
-			}
-
-		} );
 	}
 }
