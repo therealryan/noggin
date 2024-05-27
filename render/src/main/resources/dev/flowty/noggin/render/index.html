@@ -34,12 +34,13 @@
 			controls,
 			material,
 			volconfig,
-			cmtextures;
+			cmtextures,
+			url;
 
 		init();
 
 		function init() {
-
+			url = new URL( window.location );
 			scene = new THREE.Scene();
 
 			// Create renderer
@@ -49,7 +50,7 @@
 			document.body.appendChild( renderer.domElement );
 
 			// Create camera (The volume renderer does not work very well with perspective yet)
-			const h = 100; // frustum height
+			const h = 1; // frustum height
 			const aspect = window.innerWidth / window.innerHeight;
 			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 2 * h );
 			camera.position.set( - h, - h, h );
@@ -69,14 +70,17 @@
 
 			// The gui for interaction
 			volconfig = {
-			    clim1: 0, 
-				clim2: 1, 
-				renderstyle: 'iso',
-				isothreshold: 0.15,
-				colormap: 'viridis',
-			    minX: 0, maxX: 1,
-			    minY: 0, maxY: 1,
-			    minZ: 0, maxZ: 1,
+			    clim1: Number( url.searchParams.get( "clim1" ) ?? 0 ), 
+				clim2: Number( url.searchParams.get( "clim2" ) ?? 1 ), 
+				renderstyle: url.searchParams.get( "style" ) ?? 'iso',
+				isothreshold: Number( url.searchParams.get( "iso" ) ?? 0.15 ),
+				colormap: url.searchParams.get( "color" ) ?? 'viridis',
+			    minX: Number( url.searchParams.get( "minX" ) ?? 0 ), 
+				maxX: Number( url.searchParams.get( "maxX" ) ?? 1 ),
+			    minY: Number( url.searchParams.get( "minY" ) ?? 0 ), 
+				maxY: Number( url.searchParams.get( "maxY" ) ?? 1 ),
+			    minZ: Number( url.searchParams.get( "minZ" ) ?? 0 ), 
+				maxZ: Number( url.searchParams.get( "maxZ" ) ?? 1 ),
 			};
 			const gui = new GUI();
 			gui.add( volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
@@ -104,7 +108,7 @@
 				camera.top = max * aspect;
 				camera.bottom = -max * aspect;
 				camera.far = 3 * max;
-				camera.position.set( - volume.xLength / 2, - volume.yLength / 2, volume.zLength / 2 );
+				camera.position.set( - volume.xLength / 2, - volume.yLength / 2, - volume.zLength / 2 );
 			    controls.target.set( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2  );
 
 				const texture = new THREE.Data3DTexture( volume.data, volume.xLength, volume.yLength, volume.zLength );
@@ -131,6 +135,9 @@
 				uniforms[ 'u_renderstyle' ].value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
 				uniforms[ 'u_renderthreshold' ].value = volconfig.isothreshold; // For ISO renderstyle
 				uniforms[ 'u_cmdata' ].value = cmtextures[ volconfig.colormap ];
+				uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
+				uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
+				uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
 
 				material = new THREE.ShaderMaterial( {
 					uniforms: uniforms,
@@ -147,6 +154,7 @@
 				scene.add( mesh );
 
 				onWindowResize();
+				updateUniforms();
 
 			} );
 
@@ -156,35 +164,29 @@
 
 		function updateMinX() {
 			volconfig.maxX = Math.max(volconfig.minX + 0.01, volconfig.maxX);
-			material.uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
-			render();
+			updateUniforms();
 		}
 		function updateMaxX() {
 			volconfig.minX = Math.min(volconfig.minX, volconfig.maxX - 0.01);
-			material.uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
-			render();
+			updateUniforms();
 		}
 
 		function updateMinY() {
 			volconfig.maxY = Math.max(volconfig.minY + 0.01, volconfig.maxY);
-			material.uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
-			render();
+			updateUniforms();
 		}
 		function updateMaxY() {
 			volconfig.minY = Math.min(volconfig.minY, volconfig.maxY - 0.01);
-			material.uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
-			render();
+			updateUniforms();
 		}
 
 		function updateMinZ() {
 			volconfig.maxZ = Math.max(volconfig.minZ + 0.01, volconfig.maxZ);
-			material.uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
-			render();
+			updateUniforms();
 		}
 		function updateMaxZ() {
 			volconfig.minZ = Math.min(volconfig.minZ, volconfig.maxZ - 0.01);
-			material.uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
-			render();
+			updateUniforms();
 		}
 
 		function updateUniforms() {
@@ -192,7 +194,27 @@
 			material.uniforms[ 'u_renderstyle' ].value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
 			material.uniforms[ 'u_renderthreshold' ].value = volconfig.isothreshold; // For ISO renderstyle
 			material.uniforms[ 'u_cmdata' ].value = cmtextures[ volconfig.colormap ];
+			material.uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
+			material.uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
+			material.uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
 			render();
+			updateUrl();
+		}
+
+		function updateUrl() {
+			url.searchParams.set( "clim1", volconfig.clim1 );
+			url.searchParams.set( "clim2", volconfig.clim2 );
+			url.searchParams.set( "style", volconfig.renderstyle );
+			url.searchParams.set( "iso", volconfig.isothreshold );
+			url.searchParams.set( "color", volconfig.colormap );
+			url.searchParams.set( "minX", volconfig.minX );
+			url.searchParams.set( "maxX", volconfig.maxX );
+			url.searchParams.set( "minY", volconfig.minY );
+			url.searchParams.set( "maxY", volconfig.maxY );
+			url.searchParams.set( "minZ", volconfig.minZ );
+			url.searchParams.set( "maxZ", volconfig.maxZ );
+			url.searchParams.sort();
+			history.replaceState(null, '', url);
 		}
 
 		function onWindowResize() {
