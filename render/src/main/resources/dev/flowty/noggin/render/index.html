@@ -49,18 +49,18 @@
 			document.body.appendChild( renderer.domElement );
 
 			// Create camera (The volume renderer does not work very well with perspective yet)
-			const h = ${twice_max}; // frustum height
+			const h = 100; // frustum height
 			const aspect = window.innerWidth / window.innerHeight;
-			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 2 * ${twice_max} );
-			camera.position.set( - ${half_width}, - ${half_height}, ${half_depth} );
+			camera = new THREE.OrthographicCamera( - h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 2 * h );
+			camera.position.set( - h, - h, h );
 			camera.up.set( 0, 0, 1 ); // In our data, z is up
 
 			// Create controls
 			controls = new OrbitControls( camera, renderer.domElement );
 			controls.addEventListener( 'change', render );
-			controls.target.set( ${half_width}, ${half_height}, ${half_depth} );
+			controls.target.set( 100, 100, 100 );
 			controls.minZoom = 0.5;
-			controls.maxZoom = 4;
+			controls.maxZoom = 8;
 			controls.enablePan = false;
 			controls.update();
 
@@ -68,13 +68,28 @@
 			// let dirLight = new DirectionalLight( 0xffffff );
 
 			// The gui for interaction
-			volconfig = { clim1: 0, clim2: 1, renderstyle: 'iso', isothreshold: 0.15, colormap: 'viridis' };
+			volconfig = {
+			    clim1: 0, 
+				clim2: 1, 
+				renderstyle: 'iso',
+				isothreshold: 0.15,
+				colormap: 'viridis',
+			    minX: 0, maxX: 1,
+			    minY: 0, maxY: 1,
+			    minZ: 0, maxZ: 1,
+			};
 			const gui = new GUI();
 			gui.add( volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
 			gui.add( volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
 			gui.add( volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
 			gui.add( volconfig, 'isothreshold', 0, 1, 0.01 ).onChange( updateUniforms );
+			gui.add( volconfig, 'minX', 0, 0.99, 0.01 ).onChange( updateMinX ).listen();
+			gui.add( volconfig, 'maxX', 0.01, 1, 0.01 ).onChange( updateMaxX ).listen();
+			gui.add( volconfig, 'minY', 0, 0.99, 0.01 ).onChange( updateMinY ).listen();
+			gui.add( volconfig, 'maxY', 0.01, 1, 0.01 ).onChange( updateMaxY ).listen();
+			gui.add( volconfig, 'minZ', 0, 0.99, 0.01 ).onChange( updateMinZ ).listen();
+			gui.add( volconfig, 'maxZ', 0.01, 1, 0.01 ).onChange( updateMaxZ ).listen();
 
 			// Load the data ...
 			new NRRDLoader().load( '${title}.nrrd', function ( volume ) {
@@ -83,6 +98,15 @@
 				// THREEJS will select R32F (33326) based on the THREE.RedFormat and THREE.FloatType.
 				// Also see https://www.khronos.org/registry/webgl/specs/latest/2.0/#TEXTURE_TYPES_FORMATS_FROM_DOM_ELEMENTS_TABLE
 				// TODO: look the dtype up in the volume metadata
+				const max = Math.max(volume.xLength, volume.yLength, volume.zLength);
+				camera.left = -max * aspect;
+				camera.right = max * aspect;
+				camera.top = max * aspect;
+				camera.bottom = -max * aspect;
+				camera.far = 3 * max;
+				camera.position.set( - volume.xLength / 2, - volume.yLength / 2, volume.zLength / 2 );
+			    controls.target.set( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2  );
+
 				const texture = new THREE.Data3DTexture( volume.data, volume.xLength, volume.yLength, volume.zLength );
 				texture.format = THREE.RedFormat;
 				texture.type = THREE.UnsignedByteType;
@@ -122,7 +146,7 @@
 				const mesh = new THREE.Mesh( geometry, material );
 				scene.add( mesh );
 
-				render();
+				onWindowResize();
 
 			} );
 
@@ -130,15 +154,45 @@
 
 		}
 
-		function updateUniforms() {
+		function updateMinX() {
+			volconfig.maxX = Math.max(volconfig.minX + 0.01, volconfig.maxX);
+			material.uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
+			render();
+		}
+		function updateMaxX() {
+			volconfig.minX = Math.min(volconfig.minX, volconfig.maxX - 0.01);
+			material.uniforms[ 'u_xRange' ].value.set( volconfig.minX, volconfig.maxX );
+			render();
+		}
 
+		function updateMinY() {
+			volconfig.maxY = Math.max(volconfig.minY + 0.01, volconfig.maxY);
+			material.uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
+			render();
+		}
+		function updateMaxY() {
+			volconfig.minY = Math.min(volconfig.minY, volconfig.maxY - 0.01);
+			material.uniforms[ 'u_yRange' ].value.set( volconfig.minY, volconfig.maxY );
+			render();
+		}
+
+		function updateMinZ() {
+			volconfig.maxZ = Math.max(volconfig.minZ + 0.01, volconfig.maxZ);
+			material.uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
+			render();
+		}
+		function updateMaxZ() {
+			volconfig.minZ = Math.min(volconfig.minZ, volconfig.maxZ - 0.01);
+			material.uniforms[ 'u_zRange' ].value.set( volconfig.minZ, volconfig.maxZ );
+			render();
+		}
+
+		function updateUniforms() {
 			material.uniforms[ 'u_clim' ].value.set( volconfig.clim1, volconfig.clim2 );
 			material.uniforms[ 'u_renderstyle' ].value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
 			material.uniforms[ 'u_renderthreshold' ].value = volconfig.isothreshold; // For ISO renderstyle
 			material.uniforms[ 'u_cmdata' ].value = cmtextures[ volconfig.colormap ];
-
 			render();
-
 		}
 
 		function onWindowResize() {

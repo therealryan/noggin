@@ -17,7 +17,10 @@ const VolumeRenderShader1 = {
 		'u_renderthreshold': { value: 0.5 },
 		'u_clim': { value: new Vector2( 1, 1 ) },
 		'u_data': { value: null },
-		'u_cmdata': { value: null }
+		'u_cmdata': { value: null },
+		'u_xRange': { value: new Vector2( 0, 1 ) },
+		'u_yRange': { value: new Vector2( 0, 1 ) },
+		'u_zRange': { value: new Vector2( 0, 1 ) },
 	},
 
 	vertexShader: /* glsl */`
@@ -61,6 +64,9 @@ const VolumeRenderShader1 = {
 				uniform int u_renderstyle;
 				uniform float u_renderthreshold;
 				uniform vec2 u_clim;
+		        uniform vec2 u_xRange;
+		        uniform vec2 u_yRange;
+		        uniform vec2 u_zRange;
 
 				uniform sampler3D u_data;
 				uniform sampler2D u_cmdata;
@@ -134,7 +140,11 @@ const VolumeRenderShader1 = {
 
 				float sample1(vec3 texcoords) {
 						/* Sample float value from a 3D texture. Assumes intensity data. */
-						return texture(u_data, texcoords.xyz).r;
+						float s = texture(u_data, texcoords.xyz).r;
+						float xc = step( u_xRange[0], texcoords.x ) * step( texcoords.x, u_xRange[1] );
+						float yc = step( u_yRange[0], texcoords.y ) * step( texcoords.y, u_yRange[1] );
+						float zc = step( u_zRange[0], texcoords.z ) * step( texcoords.z, u_zRange[1] );
+						return s * xc * yc * zc;
 				}
 
 

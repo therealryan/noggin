@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.sun.net.httpserver.HttpServer;
@@ -111,11 +110,12 @@ public class Render {
 		String template = INDEX.asString();
 		return template
 				.replace( "${title}", name )
-				.replace( "${half_width}", String.valueOf( meta.width / 2 ) )
-				.replace( "${half_height}", String.valueOf( meta.height / 2 ) )
-				.replace( "${half_depth}", String.valueOf( meta.depth / 2 ) )
-				.replace( "${twice_max}", String.valueOf(
-						IntStream.of( meta.width, meta.height, meta.depth )
-								.max().orElse( 1 ) * 2 ) );
+//				.replace( "${half_width}", String.valueOf( meta.width / 2 ) )
+//				.replace( "${half_height}", String.valueOf( meta.height / 2 ) )
+//				.replace( "${half_depth}", String.valueOf( meta.depth / 2 ) )
+//				.replace( "${twice_max}", String.valueOf(
+//						IntStream.of( meta.width, meta.height, meta.depth )
+//								.max().orElse( 1 ) * 2 ) )
+		;
 	}
 }
